@@ -182,9 +182,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			BOOL bFoundInDLLSearchPath = FALSE;
 
 			/*************************************************
-			  Begin searching where Windows searches for DLLs 
+			  Begin searching where Windows searches for DLLs
 			  (possible hijack locations)
-			 **************************************************/
+			  **************************************************/
 
 			TCHAR tPathBeingChecked[MAX_PATH];
 
@@ -199,7 +199,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			if (PathFileExists(tPathBeingChecked) && !StrStrI(wExeDirectory, tWow64Dir))
 			{
-		
+
 				if (!is_signed(tPathBeingChecked))
 					dllSearch[DLL_EXE_DIRECTORY] = DLL_FOUND_SIGNED;
 				else
@@ -228,7 +228,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			wcscpy_s(tPathBeingChecked, wSystemDirectory);
 			wcscat_s(tPathBeingChecked, pFilename);
 
-			if (PathFileExists(tPathBeingChecked) && _wcsicmp(wSystemDirectory, wExeDirectory)) 
+			if (PathFileExists(tPathBeingChecked) && _wcsicmp(wSystemDirectory, wExeDirectory))
 			{
 				if (!is_signed(tPathBeingChecked))
 					dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_SIGNED;
@@ -241,27 +241,34 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			/* Also, without Wow64 redirection if appropriate (which stops 32 bit processes accessing C:\Windows\System32) */
 			PVOID pvOldValue = NULL;
-			if (Wow64DisableWow64FsRedirection(&pvOldValue))
+
+			/* We need to check O/S version, else calling Wow64 function will crash program on Win XP x86 */
+			WCHAR wWow64Dir[MAX_PATH];
+			if (GetSystemWow64Directory(wWow64Dir, MAX_PATH))
 			{
 
-				if (PathFileExists(tPathBeingChecked) && _wcsicmp(wSystemDirectory, wExeDirectory))
+				if (Wow64DisableWow64FsRedirection(&pvOldValue))
 				{
-					if (!is_signed(tPathBeingChecked))
-						dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_SIGNED;
-					else
-						dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_UNSIGNED;
 
-					if (!_wcsicmp(wExePath, tPathBeingChecked))
-						bFoundInDLLSearchPath = TRUE;
+					if (PathFileExists(tPathBeingChecked) && _wcsicmp(wSystemDirectory, wExeDirectory))
+					{
+						if (!is_signed(tPathBeingChecked))
+							dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_SIGNED;
+						else
+							dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_UNSIGNED;
+
+						if (!_wcsicmp(wExePath, tPathBeingChecked))
+							bFoundInDLLSearchPath = TRUE;
+					}
+
+					/* Put Wow64 redirection back on */
+					if (!Wow64RevertWow64FsRedirection(pvOldValue))
+					{
+						printf("Error: Could not re-enable Wow64 redirection\n");
+						return 1;
+					}
+
 				}
-
-				/* Put Wow64 redirection back on */
-				if (!Wow64RevertWow64FsRedirection(pvOldValue))
-				{
-					printf("Error: Could not re-enable Wow64 redirection\n");
-					return 1;
-				}
-
 			}
 
 			/* Check whether DLL can be found in System (16 bit) directory */
