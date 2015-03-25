@@ -9,6 +9,8 @@ Optional parameters:
 
 /verbose - Show all where DLLs are found in multiple search order locations regardless of whether the one loaded is one of them (expect false positives!)
 
+If you want to find CWD remote style (i.e. https://technet.microsoft.com/en-us/library/security/2269637.aspx), use both /unsigned /verbose, as this will show cases where the actual loaded DLL isn't in the search order (usually implying safe loading, but in this case - would be appropriate. /unsigned will reduce the noise)
+
 You also get a couple of files to test the tool (look in the demo folder)
 dll_hijack_test.exe and dll_hijack_test_dll.dll
 
