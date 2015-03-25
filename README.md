@@ -11,7 +11,7 @@ Optional parameters:
 
 If you want to find CWD remote style (i.e. https://technet.microsoft.com/en-us/library/security/2269637.aspx), use both /unsigned /verbose, as this will show cases where the actual loaded DLL isn't in the search order (usually implying safe loading, but in this case - would be appropriate. /unsigned will reduce the noise). 
 
-Note: The CWD is excluded from the search order scan as there is no easy way to find the CWD of another process (i.e. No API, the structures are subject to regular change etc and it would just break things). With /verbose you will see these entries anyway as the path to library as loaded.
+Note: The CWD is excluded from the search order scan as there is no easy way to find the CWD of another process (i.e. No API, the structures are subject to regular change etc and it would just break things). With /verbose you will see these entries anyway, as it will show the the path to library currently loaded.
 
 You also get a couple of files to test the tool (look in the demo folder)
 dll_hijack_test.exe and dll_hijack_test_dll.dll
