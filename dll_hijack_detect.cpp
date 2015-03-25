@@ -239,6 +239,31 @@ int _tmain(int argc, _TCHAR* argv[])
 					bFoundInDLLSearchPath = TRUE;
 			}
 
+			/* Also, without Wow64 redirection if appropriate (which stops 32 bit processes accessing C:\Windows\System32) */
+			PVOID pvOldValue = NULL;
+			if (Wow64DisableWow64FsRedirection(&pvOldValue))
+			{
+
+				if (PathFileExists(tPathBeingChecked) && _wcsicmp(wSystemDirectory, wExeDirectory))
+				{
+					if (!is_signed(tPathBeingChecked))
+						dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_SIGNED;
+					else
+						dllSearch[DLL_SYSTEM_DIRECTORY] = DLL_FOUND_UNSIGNED;
+
+					if (!_wcsicmp(wExePath, tPathBeingChecked))
+						bFoundInDLLSearchPath = TRUE;
+				}
+
+				/* Put Wow64 redirection back on */
+				if (!Wow64RevertWow64FsRedirection(pvOldValue))
+				{
+					printf("Error: Could not re-enable Wow64 redirection\n");
+					return 1;
+				}
+
+			}
+
 			/* Check whether DLL can be found in System (16 bit) directory */
 			wcscpy_s(tPathBeingChecked, wSystemDirectory_16bit);
 			wcscat_s(tPathBeingChecked, pFilename);
@@ -378,8 +403,27 @@ int _tmain(int argc, _TCHAR* argv[])
 					iUnsignedFound++;
 
 
-			/* If it's found in two or more places (or at least one is unsigned is /unsigned mode is active) */
-			if ((bVerbose || bFoundInDLLSearchPath) && (bUnsignedonly && (iUnsignedFound > 0 || !(!is_signed(wExePath))) && ((iSignedFound + iUnsignedFound) > 1) || !bUnsignedonly && ((iSignedFound + iUnsignedFound) > 1)))
+			if (
+				/* Check 1. The library being reviewed should have been found in the 'DLL search order' */
+				/*          or, the user has selected /verbose mode which may show safely loaded DLLs   */
+				( bVerbose || bFoundInDLLSearchPath ) &&
+
+					/* Check 2. If the DLL being examined was found in one of the 'server order' paths */
+					/*			We expect at least 2 paths to be found with the DLL in (legit one and dodgy one */
+					(( bFoundInDLLSearchPath && ((iSignedFound + iUnsignedFound) > 1 )) ||
+
+					/* Check 3. OR, If the DLL was not found in the 'server order' path, we want the DLL found */
+					/*			plus at least one other, which we can presume was the legitimate one */
+					(!bFoundInDLLSearchPath && ((iSignedFound + iUnsignedFound) > 0 )))
+
+					/* Check 4. If unsigned only mode is active, at least one of the items (DLL being examined or in search path) */
+					/*			needs to be unsigned */
+				&& (
+						(bUnsignedonly && ((iUnsignedFound > 0) || is_signed(wExePath))) ||
+						( !bUnsignedonly )
+					)
+				
+				)
 			{
 
 				/* Inform user that the DLL was found in more than one location it could be loaded from */
