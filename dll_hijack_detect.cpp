@@ -422,6 +422,9 @@ int _tmain(int argc, _TCHAR* argv[])
 						(bUnsignedonly && ((iUnsignedFound > 0) || is_signed(wExePath))) ||
 						( !bUnsignedonly )
 					)
+
+					/* Check 5. If the library loaded is in the Wow64Dir, ignore to avoid a ton of false positives*/
+				&& (!StrStrI(wExePath, tWow64Dir))
 				
 				)
 			{
