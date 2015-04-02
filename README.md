@@ -36,4 +36,7 @@ Accordingly, in order to reduce the amount of noise returned by the tool, I impl
 SANS article on subject:
 http://blogs.sans.org/computer-forensics/2015/03/25/detecting-dll-hijacking-on-windows/
 
+If you get an error about msvcr120.dll being missing, install the microsoft runtime libraries:
+http://www.microsoft.com/en-gb/download/details.aspx?id=40784
+
 Follow me on Twitter: @CyberKramer
